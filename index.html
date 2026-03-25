@@ -868,6 +868,7 @@ const POSITIONS = [
 
 function showInteractive() {
   document.getElementById('stage-interactive').classList.add('active');
+  preloadPhotos(); // start loading all images in background immediately
 }
 
 function startInteractive() {
@@ -973,12 +974,36 @@ function popItem(el, cx, cy, photoIndex) {
   }
 }
 
+// Preload all images as soon as stage 3 starts
+function preloadPhotos() {
+  PHOTOS.forEach(photo => {
+    const img = new Image();
+    img.src = photo.url;
+  });
+}
+
 function showPhoto(idx) {
   const photo = PHOTOS[idx];
   const overlay = document.getElementById('photo-reveal');
-  document.getElementById('reveal-img').src = photo.url;
-  document.getElementById('reveal-caption').textContent = photo.caption;
+  const imgEl = document.getElementById('reveal-img');
+  const caption = document.getElementById('reveal-caption');
+
+  // Clear previous image immediately so stale photo never shows
+  imgEl.src = '';
+  caption.textContent = '';
   overlay.classList.add('show');
+
+  // Show new image once it's ready (will be instant if preloaded)
+  const tempImg = new Image();
+  tempImg.onload = () => {
+    imgEl.src = photo.url;
+    caption.textContent = photo.caption;
+  };
+  tempImg.onerror = () => {
+    imgEl.src = photo.url; // fallback: still set it even on error
+    caption.textContent = photo.caption;
+  };
+  tempImg.src = photo.url;
 }
 
 function closePhoto() {
